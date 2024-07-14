@@ -10,7 +10,6 @@ import UIKit
 
 /// Segmeted Control
 open class RESegmentedControl: UIControl {
-
     /// Collection view flow
     private lazy var collectionViewFlow: UICollectionViewFlowLayout = {
         let collectionViewFlow = UICollectionViewFlowLayout()
@@ -25,7 +24,6 @@ open class RESegmentedControl: UIControl {
 
     /// Collection view that displays a list of segment's text and image
     private lazy var collectionView: UICollectionView = {
-
         let collectionView = UICollectionView(frame: CGRect.zero, collectionViewLayout: collectionViewFlow)
 
         collectionView.isPagingEnabled = false
@@ -38,7 +36,7 @@ open class RESegmentedControl: UIControl {
 
         collectionView.delegate = self
         collectionView.dataSource = self
-        
+
         let bundle = Bundle.bundle(forResource: "\(SegmentCollectionViewCell.self)", ofType: "nib")
         let cellNib = UINib(nibName: "\(SegmentCollectionViewCell.self)", bundle: bundle)
 
@@ -49,7 +47,6 @@ open class RESegmentedControl: UIControl {
 
     /// Collection view that displays a list of segment's backgrounds with separator
     private lazy var collectionViewBackground: UICollectionView = {
-
         let collectionView = UICollectionView(frame: CGRect.zero, collectionViewLayout: collectionViewFlow)
 
         collectionView.isPagingEnabled = false
@@ -62,10 +59,10 @@ open class RESegmentedControl: UIControl {
 
         collectionView.delegate = self
         collectionView.dataSource = self
-        
+
         let bundle = Bundle.bundle(forResource: "\(BackgroundCollectionViewCell.self)", ofType: "nib")
         let cellNib = UINib(nibName: "\(BackgroundCollectionViewCell.self)", bundle: bundle)
-        
+
         collectionView.register(cellNib, forCellWithReuseIdentifier: "\(BackgroundCollectionViewCell.self)")
 
         return collectionView
@@ -73,9 +70,9 @@ open class RESegmentedControl: UIControl {
 
     /// Whether or not collection views should update its frame
     var canCollectionViewUpdateLayout: Bool = true
-    
+
     /// Used to reload specific items in collections, should be set to nil manually after updates
-    var reloadItems: [IndexPath]? = nil
+    var reloadItems: [IndexPath]?
 
     /// Background view that overlay selected background segment
     private lazy var selectedBackgroundView: UIView = {
@@ -83,7 +80,7 @@ open class RESegmentedControl: UIControl {
         selectedBackgroundView.translatesAutoresizingMaskIntoConstraints = false
         return selectedBackgroundView
     }()
-    
+
     /// Background view gradient layer
     private var selectedBackgroundViewGradientLayer: CAGradientLayer?
 
@@ -104,18 +101,19 @@ open class RESegmentedControl: UIControl {
                 selectedBackgroundView.applyShadow(with: shadowStyle)
             }
             if selectedBackgroundViewGradientLayer == nil,
-                let gradientColor = preset.segmentSelectedItemStyle.gradientColor {
+               let gradientColor = preset.segmentSelectedItemStyle.gradientColor
+            {
                 selectedBackgroundViewGradientLayer = selectedBackgroundView.addGradient(with: gradientColor)
             }
-            self.collectionView.reloadData()
-            self.collectionViewBackground.reloadData()
+            collectionView.reloadData()
+            collectionViewBackground.reloadData()
         }
     }
 
     /// Segment items, models that will be used inside segments
     ///
     /// Should be added in configure method
-    var segmentItems: [SegmentModel] = [SegmentModel]()
+    var segmentItems = [SegmentModel]()
 
     /// Selected segment index
     public var selectedSegmentIndex: Int = -1 {
@@ -123,13 +121,11 @@ open class RESegmentedControl: UIControl {
             if oldValue != selectedSegmentIndex {
                 canCollectionViewUpdateLayout = false
                 updateLayouts()
+                let reloadItems = [oldValue, selectedSegmentIndex]
+                    .filter { $0 >= 0 }
+                    .map { IndexPath(item: $0, section: 0) }
+                collectionView.reloadItems(at: reloadItems)
                 canCollectionViewUpdateLayout = true
-                guard segmentItems.count != 0,
-                    selectedSegmentIndex != -1,
-                    selectedSegmentIndex < segmentItems.count else { return }
-                DispatchQueue.main.async {
-                    self.sendActions(for: .valueChanged)
-                }
             }
         }
     }
@@ -141,7 +137,7 @@ open class RESegmentedControl: UIControl {
 
         let segmentsSpacing = preset.segmentStyle.spacing * (itemCount - 1)
 
-        let itemWidth = ((collectionViewWidth - segmentsSpacing) / itemCount).rounded()
+        let itemWidth = ((collectionViewWidth - segmentsSpacing) / itemCount)
         let itemSize = CGSize(width: itemWidth, height: collectionView.bounds.size.height)
         return itemSize
     }
@@ -176,7 +172,7 @@ open class RESegmentedControl: UIControl {
         }
     }
 
-    public override init(frame: CGRect) {
+    override public init(frame: CGRect) {
         super.init(frame: frame)
         addViews()
     }
@@ -190,9 +186,9 @@ open class RESegmentedControl: UIControl {
     ///
     /// Should be used during initialization
     private func addViews() {
-        self.addSubview(collectionViewBackground)
+        addSubview(collectionViewBackground)
         collectionViewBackground.addSubview(selectedBackgroundView)
-        self.addSubview(collectionView)
+        addSubview(collectionView)
         addLayouts()
     }
 
@@ -200,32 +196,30 @@ open class RESegmentedControl: UIControl {
     ///
     /// Should be used during initialization
     private func addLayouts() {
-
         collectionView.translatesAutoresizingMaskIntoConstraints = false
         collectionViewBackground.translatesAutoresizingMaskIntoConstraints = false
 
         switch preset.segmentStyle.size {
         case .maxHeight:
-            collectionViewBackground.topAnchor.constraint(equalTo: self.topAnchor).isActive = true
-            collectionViewBackground.bottomAnchor.constraint(equalTo: self.bottomAnchor).isActive = true
-            collectionView.topAnchor.constraint(equalTo: self.topAnchor).isActive = true
-            collectionView.bottomAnchor.constraint(equalTo: self.bottomAnchor).isActive = true
+            collectionViewBackground.topAnchor.constraint(equalTo: topAnchor).isActive = true
+            collectionViewBackground.bottomAnchor.constraint(equalTo: bottomAnchor).isActive = true
+            collectionView.topAnchor.constraint(equalTo: topAnchor).isActive = true
+            collectionView.bottomAnchor.constraint(equalTo: bottomAnchor).isActive = true
         case .fixed(let height):
             collectionViewBackground.heightAnchor.constraint(equalToConstant: height).isActive = true
-            collectionViewBackground.centerYAnchor.constraint(equalTo: self.centerYAnchor).isActive = true
+            collectionViewBackground.centerYAnchor.constraint(equalTo: centerYAnchor).isActive = true
             collectionView.heightAnchor.constraint(equalToConstant: height).isActive = true
-            collectionView.centerYAnchor.constraint(equalTo: self.centerYAnchor).isActive = true
+            collectionView.centerYAnchor.constraint(equalTo: centerYAnchor).isActive = true
         }
 
-        collectionViewBackground.leadingAnchor.constraint(equalTo: self.leadingAnchor).isActive = true
-        collectionViewBackground.trailingAnchor.constraint(equalTo: self.trailingAnchor).isActive = true
+        collectionViewBackground.leadingAnchor.constraint(equalTo: leadingAnchor).isActive = true
+        collectionViewBackground.trailingAnchor.constraint(equalTo: trailingAnchor).isActive = true
 
-        collectionView.leadingAnchor.constraint(equalTo: self.leadingAnchor).isActive = true
-        collectionView.trailingAnchor.constraint(equalTo: self.trailingAnchor).isActive = true
+        collectionView.leadingAnchor.constraint(equalTo: leadingAnchor).isActive = true
+        collectionView.trailingAnchor.constraint(equalTo: trailingAnchor).isActive = true
     }
 
-    open override func layoutSubviews() {
-        
+    override open func layoutSubviews() {
         super.layoutSubviews()
 
         let itemSize = self.itemSize
@@ -235,7 +229,7 @@ open class RESegmentedControl: UIControl {
         }
 
         updateSelectedBackgroundViewFrame(withItemSize: itemSize)
-        
+
         selectedBackgroundViewGradientLayer?.frame = selectedBackgroundView.bounds
         selectedBackgroundViewGradientLayer?.cornerRadius = selectedBackgroundView.layer.cornerRadius
     }
@@ -244,7 +238,7 @@ open class RESegmentedControl: UIControl {
     ///
     /// Layout-Driven UI 😎
     func updateLayouts() {
-        self.setNeedsLayout()
+        setNeedsLayout()
         let duration = !canCollectionViewUpdateLayout ? 0.5 : 0
         if #available(iOS 10.0, *) {
             let layoutAnimator = UIViewPropertyAnimator(duration: duration, dampingRatio: 1.3) {
@@ -282,12 +276,12 @@ open class RESegmentedControl: UIControl {
     private func updateSelectedBackgroundViewFrame(withItemSize itemSize: CGSize) {
         let offset = preset.segmentSelectedItemStyle.offset
 
-        var backgroundSize = CGSize(width: itemSize.width, height: itemSize.height - 2*offset)
+        var backgroundSize = CGSize(width: itemSize.width, height: itemSize.height - 2 * offset)
         var backgroundYPosition: CGFloat = 0 + offset
 
         switch preset.segmentSelectedItemStyle.size {
         case .height(let height, let position):
-            backgroundSize = CGSize(width: itemSize.width - 2*offset, height: CGFloat(height) - 2*offset)
+            backgroundSize = CGSize(width: itemSize.width - 2 * offset, height: CGFloat(height) - 2 * offset)
             switch position {
             case .bottom:
                 backgroundYPosition = itemSize.height - CGFloat(height) + offset
@@ -303,7 +297,7 @@ open class RESegmentedControl: UIControl {
             selectedBackgroundView.frame = CGRect(origin: CGPoint(x: offset, y: backgroundYPosition + offset), size: backgroundSize)
         } else {
             selectedBackgroundView.isHidden = false
-            var selectedItemXPosition: CGFloat = CGFloat(selectedSegmentIndex) * (itemSize.width + preset.segmentStyle.spacing)
+            var selectedItemXPosition = CGFloat(selectedSegmentIndex) * (itemSize.width + preset.segmentStyle.spacing)
 
             switch selectedSegmentIndex {
             case 0:
@@ -319,18 +313,15 @@ open class RESegmentedControl: UIControl {
             selectedBackgroundView.frame = CGRect(origin: selectedItemPosition, size: backgroundSize)
         }
     }
-
 }
 
 // - MARK: UICollectionViewDataSource
 extension RESegmentedControl: UICollectionViewDataSource {
-
     public func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
         return segmentItems.count
     }
 
     public func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-
         guard collectionView == self.collectionView else {
             let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "\(BackgroundCollectionViewCell.self)", for: indexPath) as? BackgroundCollectionViewCell
             cell?.configure(style: preset.segmentItemStyle, isSeparatorVisible: indexPath.row != 0)
@@ -342,13 +333,14 @@ extension RESegmentedControl: UICollectionViewDataSource {
         let segmentItem = segmentItems[indexPath.row]
 
         cell = collectionView.dequeueReusableCell(withReuseIdentifier: "\(SegmentCollectionViewCell.self)", for: indexPath)
-        as? SegmentCollectionViewCell
+            as? SegmentCollectionViewCell
 
         cell?.configure(segmentItem, style: preset.segmentItemStyle, segmentContentWidthType: preset.segmentStyle.contentWidthType)
 
         if selectedSegmentIndex >= 0,
-            selectedSegmentIndex < segmentItems.count,
-            indexPath.row == selectedSegmentIndex {
+           selectedSegmentIndex < segmentItems.count,
+           indexPath.row == selectedSegmentIndex
+        {
             cell?.isSelected = indexPath.row == selectedSegmentIndex
             collectionView.selectItem(at: indexPath, animated: false, scrollPosition: .centeredHorizontally)
         }
@@ -371,9 +363,12 @@ extension RESegmentedControl: UICollectionViewDataSource {
 
 // - MARK: UICollectionViewDelegate
 extension RESegmentedControl: UICollectionViewDelegate {
-
     public func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        guard selectedSegmentIndex != indexPath.row else {
+            return
+        }
         selectedSegmentIndex = indexPath.row
+        sendActions(for: .valueChanged)
     }
 
     public func collectionView(_ collectionView: UICollectionView, shouldSelectItemAt indexPath: IndexPath) -> Bool {
